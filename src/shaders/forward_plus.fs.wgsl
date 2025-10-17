@@ -1,4 +1,5 @@
 // TODO-2: implement the Forward+ fragment shader
+// Version: 2.0 (Fixed variable naming)
 
 // See naive.fs.wgsl for basic fragment shader setup; this shader should use light clusters instead of looping over all lights
 
@@ -37,12 +38,12 @@ fn clusterIndex(clusterX: u32, clusterY: u32, clusterZ: u32) -> u32 {
     return (clusterZ * gridSizeY + clusterY) * gridSizeX + clusterX; // z-major order for cache coherency
 }
 
-fn z_to_slice(viewSpaceDepth: f32) -> u32 {
+fn mapDepthToClusterLayer(viewSpaceDepth: f32) -> u32 {
     let nearPlane = camera.nearFar.x;
     let farPlane = camera.nearFar.y;
     let totalDepthSlices = f32(clusterSet.numClustersZ);
-    let normalizedDepth = clamp((log(viewSpaceDepth / nearPlane) / log(farPlane / nearPlane)), 0.0, 0.99999);
-    return u32(floor(normalizedDepth * totalDepthSlices));
+    let logDepth = clamp((log(viewSpaceDepth / nearPlane) / log(farPlane / nearPlane)), 0.0, 0.99999);
+    return u32(floor(logDepth * totalDepthSlices));
 }
 
 @fragment
@@ -53,22 +54,21 @@ fn main(in: FragmentInput) -> @location(0) vec4f
         discard;
     }
 
-    // Derive cluster coordinates
-    let screenWidth = screenTile.x;
-    let screenHeight = screenTile.y;
-    let tileWidth = screenTile.z;
-    let tileHeight = screenTile.w;
+    // cluster coordinates
+    let screenW = screenTile.x;
+    let screenH = screenTile.y;
+    let tileW = screenTile.z;
+    let tileH = screenTile.w;
 
     let pixelX = in.fragCoord.x;
     let pixelY = in.fragCoord.y;
 
-    let clusterX = u32(clamp(floor(pixelX / tileWidth), 0.0, f32(clusterSet.numClustersX - 1u)));
-    let clusterY = u32(clamp(floor(pixelY / tileHeight), 0.0, f32(clusterSet.numClustersY - 1u)));
+    let clusterX = u32(clamp(floor(pixelX / tileW), 0.0, f32(clusterSet.numClustersX - 1u)));
+    let clusterY = u32(clamp(floor(pixelY / tileH), 0.0, f32(clusterSet.numClustersY - 1u)));
 
-    // Calculate view-space depth for z-slice determination
     let fragViewSpace = (camera.viewMat * vec4f(in.pos, 1.0)).xyz;
     let viewSpaceDepth = max(-fragViewSpace.z, camera.nearFar.x);
-    let clusterZ = z_to_slice(viewSpaceDepth);
+    let clusterZ = mapDepthToClusterLayer(viewSpaceDepth);
 
     let currentClusterIndex = clusterIndex(clusterX, clusterY, clusterZ);
     let clusterLightCount = clusterSet.clusters[currentClusterIndex].numLights;
