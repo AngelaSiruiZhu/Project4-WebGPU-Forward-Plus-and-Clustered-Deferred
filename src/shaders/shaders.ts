@@ -41,7 +41,18 @@ export const constants = {
 // =================================
 
 function evalShaderRaw(raw: string) {
-    return eval('`' + raw.replaceAll('${', '${constants.') + '`');
+    try {
+        const processedText = raw.replace(/\${(\w+)}/g, (_, key: keyof typeof constants) => {
+            if (!(key in constants)) {
+                throw new Error(`Missing constant: ${key}`);
+            }
+            return constants[key].toString();
+        });
+        return processedText;
+    } catch (err) {
+        console.error('Error processing shader:', err);
+        throw err;
+    }
 }
 
 const commonSrc: string = evalShaderRaw(commonRaw);
