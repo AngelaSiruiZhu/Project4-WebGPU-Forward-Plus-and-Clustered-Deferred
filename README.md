@@ -86,7 +86,7 @@ The naive renderer spends nearly all of its frame time inside the fragment shade
 
 2. Forward+
 
-Forward+ reduces fragment cost by performing a compute-pass light culling step that assigns lights to fixed-size screen tiles and writes per-tile lists to a storage buffer. The fragment shader then reads only the lights in its tile. These implementation choices are why measured frame times are much lower than naive (about 20 ms at 1,000 lights and 83 ms at 5,000 lights) — the work done in the fragment stage is bounded by lights-per-tile instead of total scene lights. The trade-off is extra compute and memory traffic during the culling pass.
+Forward+ reduces fragment cost by performing a compute-pass light culling step that assigns lights to fixed-size screen tiles and writes per-tile lists to a storage buffer. The fragment shader then reads only the lights in its tile. These implementation choices are why measured frame times are much lower than naive (about 20 ms at 1,000 lights and 83 ms at 5,000 lights) — the work done in the fragment stage is bounded by lights-per-tile instead of total scene lights. The trade-off is extra compute and memory traffic during the culling pass. This trade-off can be mitigated by using adaptive tile sizing—allocating smaller tiles in dense light regions and larger ones in sparse areas—to balance compute workload and memory traffic while preserving the benefits of localized light evaluation.
 
 3. Clustered Deferred
 
