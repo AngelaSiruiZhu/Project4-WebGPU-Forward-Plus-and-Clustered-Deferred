@@ -33,7 +33,6 @@ This project implements three different rendering techniques in WebGPU:
 The naive implementation processes each fragment by considering all lights in the scene:
 - Single render pass pipeline using vertex and fragment shaders
 - Fragment shader iterates through all lights for each pixel
-- Simple but inefficient with many lights
 - Performance scales linearly with light count (O(pixels * lights))
 
 #### 2. Forward+ Rendering
@@ -90,7 +89,7 @@ Forward+ reduces fragment cost by performing a compute-pass light culling step t
 
 3. Clustered Deferred
 
-Clustered Deferred separates geometry and lighting (G-buffer) and assigns lights into a 3D view-space cluster grid. The final fullscreen lighting pass reads G-buffer textures and evaluates only cluster-local lights. Because costly shading is removed from the geometry pass and lighting work is limited by cluster occupancy, frame times are the lowest in these measurements (~8 ms at 1,000 lights, ~31 ms at 5,000 lights). The implementation uses a fullscreen pass to avoid redundant shading and a storage buffer to hold cluster light lists; these choices minimize per-pixel work and explain the headroom seen in the numbers. The trade-off is that it cannot achieve transparency alone, and has to work with forward methods. 
+Clustered Deferred separates geometry and lighting (G-buffer) and assigns lights into a 3D view-space cluster grid. The final fullscreen lighting pass reads G-buffer textures and evaluates only cluster-local lights. Because costly shading is removed from the geometry pass and lighting work is limited by cluster occupancy, frame times are the lowest in these measurements (~8 ms at 1,000 lights, ~31 ms at 5,000 lights). The implementation uses a fullscreen pass to avoid redundant shading and a storage buffer to hold cluster light lists; these choices minimize per-pixel work and explain the headroom seen in the numbers. The trade-off is that deferred rendering cannot handle transparency on its own and must be combined with forward rendering for such materials.
 
 ### Credits
 
